@@ -1,9 +1,9 @@
 <?php
 // Configuration de la base de données (avec valeurs par défaut)
-$dbHost = 'mysql-mende.alwaysdata.net';
-$dbName = 'mende_vocabard';
-$dbUser = 'mende';
-$dbPass = 'Men5P@sS';
+$dbHost = '';
+$dbName = '';
+$dbUser = '';
+$dbPass = '';
 
 // CORS headers - Allow both localhost and production domain
 $allowedOrigins = [
