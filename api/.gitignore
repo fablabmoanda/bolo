@@ -1,0 +1,9 @@
+.env
+4Q50TdDqx=
+
+
+// Configuration de la base de données (avec valeurs par défaut)
+$dbHost = $_ENV['DB_HOST'] ?? 'mysql-mende.alwaysdata.net';
+$dbName = $_ENV['DB_NAME'] ?? 'mende_vocabard';
+$dbUser = $_ENV['DB_USER'] ?? 'mende';
+$dbPass = $_ENV['DB_PASS'] ?? 'Men5P@sS';

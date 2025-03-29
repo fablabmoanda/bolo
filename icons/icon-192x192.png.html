@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Générateur d'icône PNG</title>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="192" height="192"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Fond bleu
+    ctx.fillStyle = '#0d6efd';
+    ctx.fillRect(0, 0, 192, 192);
+    
+    // Rectangle blanc arrondi
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    const rectWidth = 96;
+    const rectHeight = 96;
+    const rectX = (192 - rectWidth) / 2;
+    const rectY = (192 - rectHeight) / 2;
+    const radius = 8;
+    ctx.moveTo(rectX + radius, rectY);
+    ctx.lineTo(rectX + rectWidth - radius, rectY);
+    ctx.arcTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + radius, radius);
+    ctx.lineTo(rectX + rectWidth, rectY + rectHeight - radius);
+    ctx.arcTo(rectX + rectWidth, rectY + rectHeight, rectX + rectWidth - radius, rectY + rectHeight, radius);
+    ctx.lineTo(rectX + radius, rectY + rectHeight);
+    ctx.arcTo(rectX, rectY + rectHeight, rectX, rectY + rectHeight - radius, radius);
+    ctx.lineTo(rectX, rectY + radius);
+    ctx.arcTo(rectX, rectY, rectX + radius, rectY, radius);
+    ctx.fill();
+    
+    // Texte "123"
+    ctx.fillStyle = '#0d6efd';
+    ctx.font = 'bold 45px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('123', 192/2, 192/2);
+    
+    // Téléchargement
+    const link = document.createElement('a');
+    link.download = 'icon-192x192.png';
+    link.href = canvas.toDataURL('image/png');
+    link.textContent = 'Télécharger l\'icône PNG';
+    link.style.display = 'block';
+    link.style.margin = '20px';
+    document.body.appendChild(link);
+    
+    // Clic automatique pour télécharger
+    setTimeout(() => {
+      link.click();
+    }, 1000);
+  </script>
+</body>
+</html> 

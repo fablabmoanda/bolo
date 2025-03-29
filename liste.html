@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des enregistrements</title>
+    <!-- Add favicon links -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <!-- Existing stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        .refresh-btn {
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            display: none; /* Will be changed to table-row when loading */
+        }
+        .error-message {
+            display: none;
+            color: #dc3545;
+            margin: 20px 0;
+        }
+        .table th {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .back-btn {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>Liste des enregistrements</h1>
+            <a href="index.html" class="btn btn-outline-primary back-btn">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+        
+        <button id="refreshBtn" class="btn btn-primary refresh-btn">
+            <i class="bi bi-arrow-clockwise"></i> Rafraîchir
+        </button>
+        
+        <!-- Remove this external spinner -->
+        <div id="errorMessage" class="error-message">
+            <i class="bi bi-exclamation-triangle-fill"></i> 
+            Erreur lors du chargement des données. Veuillez réessayer.
+        </div>
+        
+        <div class="table-container">
+            <table id="recordsTable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Motif</th>
+                        <th>Heure d'arrivée</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Les données seront insérées ici par JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Déterminer l'URL de base de l'API en fonction de l'environnement
+        function getApiBaseUrl() {
+            // Vérifier si nous sommes en local ou en production
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                                window.location.hostname === '127.0.0.1' ||
+                                window.location.hostname.includes('192.168.');
+            
+            return isLocalhost ? 'http://localhost:8000' : 'https://bolo.fablabmoanda.com';
+        }
+
+        // URL de base de l'API
+        const API_BASE_URL = getApiBaseUrl();
+
+        // Fonction pour formater la date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Fonction pour charger les données
+        function loadData() {
+            // Vider le tableau et afficher uniquement le spinner
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = `
+                <tr id="tableLoadingSpinner">
+                    <td colspan="3" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-2 mb-0">Chargement des données...</p>
+                    </td>
+                </tr>
+            `;
+            
+            // Cacher le message d'erreur
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Récupérer les données depuis l'API
+            fetch(`${API_BASE_URL}/api/liste.php`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur réseau');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Données reçues:', data);
+                    
+                    // Vider le tableau (y compris le spinner)
+                    tableBody.innerHTML = '';
+                    
+                    // Vérifier si des données ont été retournées
+                    if (data.data && data.data.length > 0) {
+                        // Trier les entrées par date (la plus récente en premier)
+                        data.data.sort((a, b) => {
+                            return new Date(b.creele) - new Date(a.creele);
+                        });
+                        
+                        // Grouper les entrées par jour
+                        const entriesByDay = {};
+                        
+                        data.data.forEach(entry => {
+                            // Extraire la date sans l'heure
+                            const datePart = entry.creele.split(' ')[0];
+                            
+                            // Créer un tableau pour ce jour s'il n'existe pas encore
+                            if (!entriesByDay[datePart]) {
+                                entriesByDay[datePart] = [];
+                            }
+                            
+                            // Ajouter l'entrée au tableau du jour correspondant
+                            entriesByDay[datePart].push(entry);
+                        });
+                        
+                        // Parcourir les jours (déjà triés car les entrées étaient triées)
+                        Object.keys(entriesByDay).sort().reverse().forEach(day => {
+                            // Créer une ligne d'en-tête pour le jour
+                            const headerRow = document.createElement('tr');
+                            headerRow.className = 'table-primary';
+                            
+                            const headerCell = document.createElement('td');
+                            headerCell.colSpan = 3;
+                            headerCell.className = 'fw-bold';
+                            
+                            // Formater la date du jour en français
+                            const dayDate = new Date(day);
+                            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                            const formattedDate = dayDate.toLocaleDateString('fr-FR', options);
+                            
+                            // Ajouter le nombre d'enregistrements pour ce jour
+                            const entriesCount = entriesByDay[day].length;
+                            headerCell.textContent = `${formattedDate} (${entriesCount} au total)`;
+                            
+                            headerRow.appendChild(headerCell);
+                            tableBody.appendChild(headerRow);
+                            
+                            // Ajouter les entrées de ce jour
+                            entriesByDay[day].forEach(entry => {
+                                const row = document.createElement('tr');
+                                
+                                const codeCell = document.createElement('td');
+                                codeCell.textContent = entry.code;
+                                row.appendChild(codeCell);
+                                
+                                const motifCell = document.createElement('td');
+                                // Première lettre en majuscule pour le motif
+                                motifCell.textContent = entry.motif.charAt(0).toUpperCase() + entry.motif.slice(1);
+                                row.appendChild(motifCell);
+                                
+                                const dateCell = document.createElement('td');
+                                // N'afficher que l'heure pour les entrées d'un même jour
+                                const entryDate = new Date(entry.creele);
+                                dateCell.textContent = entryDate.toLocaleTimeString('fr-FR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                row.appendChild(dateCell);
+                                
+                                tableBody.appendChild(row);
+                            });
+                        });
+                    } else {
+                        // Afficher un message si aucune donnée n'est disponible
+                        const row = document.createElement('tr');
+                        const cell = document.createElement('td');
+                        cell.colSpan = 3;
+                        cell.textContent = 'Aucun enregistrement trouvé';
+                        cell.className = 'text-center';
+                        row.appendChild(cell);
+                        tableBody.appendChild(row);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    
+                    // Vider le tableau et afficher un message d'erreur
+                    const tableBody = document.getElementById('tableBody');
+                    tableBody.innerHTML = '';
+                    
+                    // Afficher le message d'erreur
+                    document.getElementById('errorMessage').style.display = 'block';
+                });
+        }
+
+        // Charger les données au chargement de la page
+        document.addEventListener('DOMContentLoaded', loadData);
+        
+        // Configurer le bouton de rafraîchissement
+        document.getElementById('refreshBtn').addEventListener('click', loadData);
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

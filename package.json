@@ -1,0 +1,20 @@
+{
+  "name": "clavier-web",
+  "version": "1.0.0",
+  "description": "Application de saisie de code avec clavier virtuel",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -p 8080",
+    "server": "php -S localhost:8000 -t ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

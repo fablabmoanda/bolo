@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Générateur d'icône PNG 144x144</title>
+  <style>
+    body { margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif; }
+    canvas { border: 1px solid #ccc; margin-bottom: 20px; }
+    .instructions { max-width: 600px; margin: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6; }
+    h1 { color: #0d6efd; }
+    .btn { display: inline-block; padding: 10px 15px; background: #0d6efd; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Générateur d'icône PNG</h1>
+  
+  <div class="instructions">
+    <p><strong>Instructions :</strong></p>
+    <ol>
+      <li>Cliquez sur le bouton ci-dessous pour télécharger l'icône PNG</li>
+      <li>Placez le fichier téléchargé dans le dossier <code>icons/</code> de votre projet</li>
+      <li>Assurez-vous que le fichier est nommé <code>icon-144x144.png</code></li>
+    </ol>
+  </div>
+  
+  <canvas id="canvas" width="144" height="144"></canvas>
+  
+  <a id="download" class="btn" href="#">Télécharger l'icône PNG</a>
+  
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('download');
+    
+    // Fond bleu
+    ctx.fillStyle = '#0d6efd';
+    ctx.fillRect(0, 0, 144, 144);
+    
+    // Rectangle blanc arrondi
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    const rectWidth = 72;
+    const rectHeight = 72;
+    const rectX = (144 - rectWidth) / 2;
+    const rectY = (144 - rectHeight) / 2;
+    const radius = 6;
+    ctx.moveTo(rectX + radius, rectY);
+    ctx.lineTo(rectX + rectWidth - radius, rectY);
+    ctx.arcTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + radius, radius);
+    ctx.lineTo(rectX + rectWidth, rectY + rectHeight - radius);
+    ctx.arcTo(rectX + rectWidth, rectY + rectHeight, rectX + rectWidth - radius, rectY + rectHeight, radius);
+    ctx.lineTo(rectX + radius, rectY + rectHeight);
+    ctx.arcTo(rectX, rectY + rectHeight, rectX, rectY + rectHeight - radius, radius);
+    ctx.lineTo(rectX, rectY + radius);
+    ctx.arcTo(rectX, rectY, rectX + radius, rectY, radius);
+    ctx.fill();
+    
+    // Texte "123"
+    ctx.fillStyle = '#0d6efd';
+    ctx.font = 'bold 34px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('123', 144/2, 144/2);
+    
+    // Configuration du bouton de téléchargement
+    downloadBtn.addEventListener('click', function() {
+      const link = document.createElement('a');
+      link.download = 'icon-144x144.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html> 
