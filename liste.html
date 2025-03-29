@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des enregistrements</title>
-    <!-- Add favicon links -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-512x512.svg">
+
     <!-- Existing stylesheets -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -67,6 +66,7 @@
                         <th>Code</th>
                         <th>Motif</th>
                         <th>Heure d'arrivée</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -106,9 +106,10 @@
         function loadData() {
             // Vider le tableau et afficher uniquement le spinner
             const tableBody = document.getElementById('tableBody');
+            // Dans la fonction loadData(), modifions le colspan du spinner de chargement
             tableBody.innerHTML = `
                 <tr id="tableLoadingSpinner">
-                    <td colspan="3" class="text-center py-5">
+                    <td colspan="4" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Chargement...</span>
                         </div>
@@ -163,8 +164,9 @@
                             const headerRow = document.createElement('tr');
                             headerRow.className = 'table-primary';
                             
+                            // Dans la section qui crée l'en-tête du jour, modifions le colspan
                             const headerCell = document.createElement('td');
-                            headerCell.colSpan = 3;
+                            headerCell.colSpan = 4; // Changé de 3 à 4 pour inclure la colonne d'actions
                             headerCell.className = 'fw-bold';
                             
                             // Formater la date du jour en français
@@ -201,14 +203,145 @@
                                 });
                                 row.appendChild(dateCell);
                                 
+                                // Ajouter la cellule d'actions avec les trois points
+                                const actionsCell = document.createElement('td');
+                                actionsCell.className = 'text-end';
+                                
+                                const actionsDropdown = document.createElement('div');
+                                actionsDropdown.className = 'dropdown';
+                                
+                                const dropdownButton = document.createElement('button');
+                                dropdownButton.className = 'btn btn-sm btn-link text-secondary dropdown-toggle';
+                                dropdownButton.setAttribute('type', 'button');
+                                dropdownButton.setAttribute('data-bs-toggle', 'dropdown');
+                                dropdownButton.setAttribute('aria-expanded', 'false');
+                                dropdownButton.innerHTML = '<i class="bi bi-three-dots-vertical"></i>';
+                                
+                                const dropdownMenu = document.createElement('ul');
+                                dropdownMenu.className = 'dropdown-menu dropdown-menu-end';
+                                
+                                const deleteItem = document.createElement('li');
+                                const deleteLink = document.createElement('a');
+                                deleteLink.className = 'dropdown-item text-white bg-danger';  // Changé de 'text-danger' à 'text-white bg-danger'
+                                deleteLink.href = '#';
+                                deleteLink.innerHTML = '<i class="bi bi-trash"></i> Supprimer';
+                                deleteLink.onclick = (e) => {
+                                    e.preventDefault();
+                                    
+                                    // Afficher la confirmation
+                                    if (confirm(`Voulez-vous vraiment supprimer cet enregistrement ?\n\nCode: ${entry.code}\nMotif: ${motifCell.textContent}\nHeure: ${dateCell.textContent}`)) {
+                                        // Appeler l'API pour supprimer l'enregistrement
+                                        deleteRecord(entry.id);
+                                    }
+                                };
+                                
+                                deleteItem.appendChild(deleteLink);
+                                dropdownMenu.appendChild(deleteItem);
+                                
+                                actionsDropdown.appendChild(dropdownButton);
+                                actionsDropdown.appendChild(dropdownMenu);
+                                actionsCell.appendChild(actionsDropdown);
+                                
+                                row.appendChild(actionsCell);
+                                
                                 tableBody.appendChild(row);
                             });
+                            
+                            // Ajouter cette fonction pour supprimer un enregistrement
+                            function deleteRecord(id) {
+                                // Afficher un spinner pendant la suppression
+                                const loadingToast = showToast('Suppression en cours...', 'info');
+                                
+                                fetch(`${API_BASE_URL}/api/delete.php`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ id: id })
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Erreur lors de la suppression');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    // Fermer le toast de chargement
+                                    loadingToast.hide();
+                                    
+                                    if (data.status === 'success') {
+                                        // Afficher un message de succès
+                                        showToast('Enregistrement supprimé avec succès', 'success', 3000);
+                                        
+                                        // Recharger les données
+                                        loadData();
+                                    } else {
+                                        throw new Error(data.message || 'Erreur lors de la suppression');
+                                    }
+                                })
+                                .catch(error => {
+                                    // Fermer le toast de chargement
+                                    loadingToast.hide();
+                                    
+                                    // Afficher un message d'erreur
+                                    showToast(`Erreur: ${error.message}`, 'danger', 5000);
+                                    console.error('Erreur:', error);
+                                });
+                            }
+                            
+                            // Fonction pour afficher un toast (notification)
+                            function showToast(message, type = 'info', duration = 0) {
+                                // Créer le conteneur de toasts s'il n'existe pas
+                                let toastContainer = document.getElementById('toastContainer');
+                                if (!toastContainer) {
+                                    toastContainer = document.createElement('div');
+                                    toastContainer.id = 'toastContainer';
+                                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                                    document.body.appendChild(toastContainer);
+                                }
+                                
+                                // Créer le toast
+                                const toastId = 'toast-' + Date.now();
+                                const toastEl = document.createElement('div');
+                                toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
+                                toastEl.id = toastId;
+                                toastEl.setAttribute('role', 'alert');
+                                toastEl.setAttribute('aria-live', 'assertive');
+                                toastEl.setAttribute('aria-atomic', 'true');
+                                
+                                toastEl.innerHTML = `
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            ${message}
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+                                    </div>
+                                `;
+                                
+                                toastContainer.appendChild(toastEl);
+                                
+                                // Initialiser et afficher le toast
+                                const toast = new bootstrap.Toast(toastEl, {
+                                    autohide: duration > 0,
+                                    delay: duration
+                                });
+                                toast.show();
+                                
+                                // Si une durée est spécifiée, supprimer le toast après
+                                if (duration > 0) {
+                                    setTimeout(() => {
+                                        toastEl.remove();
+                                    }, duration + 500);
+                                }
+                                
+                                return toast;
+                            }
                         });
                     } else {
                         // Afficher un message si aucune donnée n'est disponible
                         const row = document.createElement('tr');
                         const cell = document.createElement('td');
-                        cell.colSpan = 3;
+                        cell.colSpan = 4; // Changé de 3 à 4
                         cell.textContent = 'Aucun enregistrement trouvé';
                         cell.className = 'text-center';
                         row.appendChild(cell);

@@ -1,5 +1,5 @@
 // Increment the cache version to force update
-const CACHE_NAME = 'clavier-web-cache-v1.14';
+const CACHE_NAME = 'clavier-web-cache-v1.17';
 const urlsToCache = [
   '/',
   '/index.html',
