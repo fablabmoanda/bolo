@@ -210,7 +210,7 @@ function handleMotifSelection(event) {
         // Réinitialiser l'interface après 5 secondes
         setTimeout(() => {
             window.location.reload();
-        }, 5000);
+        }, 3000);
     })
     .catch(error => {
         console.error('Erreur:', error);
